@@ -854,9 +854,13 @@ render('', '', '');
 
 // ===== DASHBOARD =====
 function fmtK(v) {
+  if (Math.abs(v) < 0.5) return '-';
+  return Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function fmtAbbr(v) {
   var a = Math.abs(v);
-  if (a >= 1e6) return (v/1e6).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + 'M';
-  if (a >= 1e3) return (v/1e3).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) + 'K';
+  if (a >= 1e6) return (v/1e6).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'M';
+  if (a >= 1e3) return (v/1e3).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})+'K';
   return v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
 }
 
@@ -953,10 +957,10 @@ function renderTrendChart(monthly, dashMes) {
   [0, 0.25, 0.5, 0.75, 1].forEach(function(t){
     var v = maxV * t; var y = pyL(v);
     grid += '<line x1="'+pad.left+'" y1="'+y+'" x2="'+(pad.left+iW)+'" y2="'+y+'" stroke="#f0f0f0" stroke-width="1"/>';
-    grid += '<text x="'+(pad.left-6)+'" y="'+(y+3)+'" text-anchor="end" font-size="9" fill="#bbb">'+fmtK(v)+'</text>';
+    grid += '<text x="'+(pad.left-6)+'" y="'+(y+3)+'" text-anchor="end" font-size="9" fill="#bbb">'+fmtAbbr(v)+'</text>';
     // eixo direito
     var vR = maxAcc * t;
-    grid += '<text x="'+(pad.left+iW+6)+'" y="'+(pyR(vR)+3)+'" text-anchor="start" font-size="9" fill="#c0a080">'+fmtK(vR)+'</text>';
+    grid += '<text x="'+(pad.left+iW+6)+'" y="'+(pyR(vR)+3)+'" text-anchor="start" font-size="9" fill="#c0a080">'+fmtAbbr(vR)+'</text>';
   });
 
   // Barras mensais
