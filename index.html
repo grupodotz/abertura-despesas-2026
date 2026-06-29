@@ -161,7 +161,7 @@ td.ytd{background:#f5f2ff;font-weight:700;border-left:2px solid #e0d9ff}
       <div class="kpi-card"><div class="kpi-label">Gasto no M&#234;s</div><div class="kpi-value" id="kpiMesVal">&#8212;</div><div class="kpi-sub" id="kpiMesLbl"></div></div>
       <div class="kpi-card"><div class="kpi-label">Acumulado YTD</div><div class="kpi-value" id="kpiYtdVal">&#8212;</div><div class="kpi-sub" id="kpiYtdLbl"></div></div>
       <div class="kpi-card"><div class="kpi-label">Varia&#231;&#227;o MoM</div><div class="kpi-value" id="kpiMomVal">&#8212;</div><div class="kpi-sub" id="kpiMomLbl"></div></div>
-      <div class="kpi-card"><div class="kpi-label">Fornecedores Ativos</div><div class="kpi-value" id="kpiFornVal">&#8212;</div><div class="kpi-sub" id="kpiFornLbl"></div></div>
+      <div class="kpi-card"><div class="kpi-label">Varia&#231;&#227;o YoY (vs ano anterior)</div><div class="kpi-value" id="kpiYoyVal" style="font-size:18px;color:#bbb">n/d</div><div class="kpi-sub" id="kpiYoyLbl" style="line-height:1.8">&Delta; M&#234;s: <span id="kpiYoyMes">n/d</span><br>&Delta; YTD: <span id="kpiYoyYtd">n/d</span></div></div>
     </div>
     <div class="dash-row">
       <div class="dash-card" style="flex:1">
@@ -918,8 +918,10 @@ function renderDashboard() {
   var momCls  = mom >= 0 ? 'kpi-up' : 'kpi-dn';
   document.getElementById('kpiMomVal').innerHTML = '<span class="' + momCls + '">' + momSign + mom.toFixed(1) + '%</span>';
   document.getElementById('kpiMomLbl').textContent = prevMes ? 'vs ' + (MES_SHORT[prevMes] || prevMes) : '—';
-  document.getElementById('kpiFornVal').textContent = fornActive.size;
-  document.getElementById('kpiFornLbl').textContent = 'com lançamento no mês';
+  // YoY — sem dados de 2025 por enquanto
+  document.getElementById('kpiYoyVal').textContent = 'n/d';
+  document.getElementById('kpiYoyMes').textContent = 'n/d';
+  document.getElementById('kpiYoyYtd').textContent = 'n/d';
 
   var lbl = mesLabel + '/2026';
   document.getElementById('dashFornMesLbl').textContent = lbl;
