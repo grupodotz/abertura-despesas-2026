@@ -255,8 +255,10 @@ function ytd(o) {
 }
 
 function fmtChange(curr, prev) {
-  if (prev === 0 && curr === 0) return '<span class="chg-eq">&#9679;</span>';
-  if (prev === 0) return '';
+  var prevZero = Math.abs(prev) < 0.5;
+  var currZero = Math.abs(curr) < 0.5;
+  if (prevZero && currZero) return '<span class="chg-eq">&#9679;</span>';
+  if (prevZero) return curr > 0 ? '<span class="chg-up">&#8679;100%</span>' : '<span class="chg-dn">&#8681;100%</span>';
   var pct = (curr - prev) / Math.abs(prev) * 100;
   if (Math.abs(pct) < 0.01) return '<span class="chg-eq">&#9679;</span>';
   if (curr > prev) return '<span class="chg-up">&#8679;' + Math.abs(pct).toFixed(1) + '%</span>';
@@ -289,7 +291,7 @@ function meetsVarFilter(vals) {
   var atual = vals[varFilter.mes] || 0;
   var ref   = vals[varFilter.ref] || 0;
   var dR    = atual - ref;
-  var dPct  = ref !== 0 ? (dR / Math.abs(ref) * 100) : (atual !== 0 ? 100 : 0);
+  var dPct  = Math.abs(ref) >= 0.5 ? (dR / Math.abs(ref) * 100) : (Math.abs(atual) >= 0.5 ? 100 : 0);
   if (varFilter.dir === 'pos' && dR <= 0) return false;
   if (varFilter.dir === 'neg' && dR >= 0) return false;
   var okPct = varFilter.pct === null || Math.abs(dPct) > varFilter.pct;
