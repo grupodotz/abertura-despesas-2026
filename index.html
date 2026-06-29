@@ -244,7 +244,7 @@ function toTitleCase(s) {
 }
 
 function fmt(v) {
-  if (v === 0 || v == null) return '<span class="zero">-</span>';
+  if (v == null || Math.abs(v) < 0.5) return '<span class="zero">-</span>';
   var abs = Math.abs(v);
   var s = abs.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
   return v < 0 ? '<span class="neg">(' + s + ')</span>' : s;
