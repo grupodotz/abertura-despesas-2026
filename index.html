@@ -112,9 +112,8 @@ td.ytd{background:#f5f2ff;font-weight:700;border-left:2px solid #e0d9ff}
       <select id="pac">
         <option value="">Todos os pacotes</option>
       </select>
-      <select id="forn">
-        <option value="">Todos os fornecedores</option>
-      </select>
+      <input id="forn" list="fornList" placeholder="Fornecedor..." autocomplete="off" style="height:28px;padding:0 8px;border:1px solid #d9d0f5;border-radius:6px;font-size:12px;width:160px;outline:none">
+      <datalist id="fornList"></datalist>
       <button id="btnToggle">&#8964; Expandir todas</button>
       <button id="btnProv" class="btn-prov">&#9888; Gerar Proviso&#771;es <span class="prov-badge" id="provCount"></span></button>
       <button id="btnVar" class="btn-var">&#9650; Varia&#231;&#227;o</button>
@@ -194,10 +193,6 @@ td.ytd{background:#f5f2ff;font-weight:700;border-left:2px solid #e0d9ff}
         <div id="sharePacList" style="max-height:110px;overflow-y:auto;border:1px solid #d9d0f5;border-radius:6px;padding:6px 8px;display:grid;grid-template-columns:1fr 1fr;gap:4px"></div>
       </div>
       <div class="srow">
-        <span class="srow-lbl">Fornecedores vis&#237;veis <span style="font-size:10px;color:#999;font-weight:400;text-transform:none;letter-spacing:0">(nenhum = todos)</span></span>
-        <div id="shareFornList" style="max-height:110px;overflow-y:auto;border:1px solid #d9d0f5;border-radius:6px;padding:6px 8px;display:grid;grid-template-columns:1fr 1fr;gap:4px"></div>
-      </div>
-      <div class="srow">
         <span class="srow-lbl">Funcionalidades</span>
         <div>
           <div class="toggle-row">
@@ -211,6 +206,10 @@ td.ytd{background:#f5f2ff;font-weight:700;border-left:2px solid #e0d9ff}
           <div class="toggle-row">
             <span style="font-size:12px;color:#444">Mostrar bot&#227;o Varia&#231;&#227;o</span>
             <label class="toggle-sw"><input type="checkbox" id="shareVarChk" checked><span class="tslider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span style="font-size:12px;color:#444">Mostrar filtro Fornecedor</span>
+            <label class="toggle-sw"><input type="checkbox" id="shareFornFiltChk" checked><span class="tslider"></span></label>
           </div>
         </div>
       </div>
@@ -303,7 +302,7 @@ function build(empFilt, pacFilt, fornFilt) {
   RAW_DATA.forEach(function(r) {
     if (empFilt && r.empresa !== empFilt) return;
     if (pacFilt && r.pacote !== pacFilt) return;
-    if (fornFilt && r.fornecedor !== fornFilt) return;
+    if (fornFilt && r.fornecedor.toLowerCase().indexOf(fornFilt.toLowerCase()) === -1) return;
     var g = r.grupo || '(Sem Grupo)';
     if (!tree[g]) tree[g] = {_tot: obj0()};
     if (!tree[g][r.pacote]) tree[g][r.pacote] = {_tot: obj0()};
@@ -519,9 +518,9 @@ function populateForn(empFilt, pacFilt) {
   var forns = Array.from(new Set(RAW_DATA.filter(function(r) {
     return (!empFilt || r.empresa === empFilt) && (!pacFilt || r.pacote === pacFilt);
   }).map(function(r){ return r.fornecedor; }))).sort();
-  var sel = document.getElementById('forn');
-  sel.innerHTML = '<option value="">Todos os fornecedores</option>';
-  forns.forEach(function(f){ var o = document.createElement('option'); o.value = f; o.textContent = toTitleCase(f); sel.appendChild(o); });
+  var dl = document.getElementById('fornList');
+  dl.innerHTML = '';
+  forns.forEach(function(fn){ var o = document.createElement('option'); o.value = fn; dl.appendChild(o); });
 }
 populateForn('', '');
 
@@ -539,7 +538,7 @@ populateForn('', '');
 function getFilters() { return [document.getElementById('emp').value, document.getElementById('pac').value, document.getElementById('forn').value]; }
 document.getElementById('emp').addEventListener('change', function(){ populatePac(this.value); populateForn(this.value, ''); render(this.value, '', ''); });
 document.getElementById('pac').addEventListener('change', function(){ var f = getFilters(); populateForn(f[0], f[1]); render(f[0], f[1], ''); });
-document.getElementById('forn').addEventListener('change', function(){ var f = getFilters(); render(f[0], f[1], f[2]); });
+document.getElementById('forn').addEventListener('input', function(){ var f = getFilters(); render(f[0], f[1], f[2]); });
 
 document.getElementById('btnVar').addEventListener('click', function(){ document.getElementById('varBg').style.display='flex'; });
 document.getElementById('varClose').addEventListener('click', function(){ document.getElementById('varBg').style.display='none'; });
@@ -589,7 +588,7 @@ function calcProvisoes(empFilt, pacFilt, fornFilt) {
   return RAW_DATA.filter(function(r) {
     return (!empFilt || r.empresa === empFilt) &&
            (!pacFilt || r.pacote === pacFilt) &&
-           (!fornFilt || r.fornecedor === fornFilt) &&
+           (!fornFilt || r.fornecedor.toLowerCase().indexOf(fornFilt.toLowerCase()) !== -1) &&
            (r[PROV_MES_REF] || 0) > 5000 &&
            (r[PROV_MES_CUR] || 0) === 0;
   }).sort(function(a, b){ return (b[PROV_MES_REF]||0) - (a[PROV_MES_REF]||0); });
@@ -672,21 +671,18 @@ window._shareBlock = {};
     if (cfg.drill === false) window._shareBlock.drill = true;
     if (cfg.prov === false) window._shareBlock.prov = true;
     if (cfg.varBtn === false) { window._shareBlock.varBtn = true; document.getElementById('btnVar').style.display = 'none'; }
-    var allowedEmps  = (cfg.emps  && cfg.emps.length)  ? cfg.emps  : null;
-    var allowedPacs  = (cfg.pacs  && cfg.pacs.length)  ? cfg.pacs  : null;
-    var allowedForns = (cfg.forns && cfg.forns.length) ? cfg.forns : null;
-    if (allowedEmps || allowedPacs || allowedForns) {
+    var allowedEmps = (cfg.emps && cfg.emps.length) ? cfg.emps : null;
+    var allowedPacs = (cfg.pacs && cfg.pacs.length) ? cfg.pacs : null;
+    if (allowedEmps || allowedPacs) {
       var filtRaw = RAW_DATA.filter(function(r) {
-        return (!allowedEmps  || allowedEmps.indexOf(r.empresa)    !== -1) &&
-               (!allowedPacs  || allowedPacs.indexOf(r.pacote)     !== -1) &&
-               (!allowedForns || allowedForns.indexOf(r.fornecedor) !== -1);
+        return (!allowedEmps || allowedEmps.indexOf(r.empresa) !== -1) &&
+               (!allowedPacs || allowedPacs.indexOf(r.pacote)  !== -1);
       });
       RAW_DATA.length = 0;
       filtRaw.forEach(function(r) { RAW_DATA.push(r); });
       var filtDet = DETAIL_DATA.filter(function(r) {
-        return (!allowedEmps  || allowedEmps.indexOf(r.emp)   !== -1) &&
-               (!allowedPacs  || allowedPacs.indexOf(r.pac)   !== -1) &&
-               (!allowedForns || allowedForns.indexOf(r.forn) !== -1);
+        return (!allowedEmps || allowedEmps.indexOf(r.emp) !== -1) &&
+               (!allowedPacs || allowedPacs.indexOf(r.pac) !== -1);
       });
       DETAIL_DATA.length = 0;
       filtDet.forEach(function(r) { DETAIL_DATA.push(r); });
@@ -703,11 +699,10 @@ window._shareBlock = {};
         pacSel2.value = allowedPacs[0];
         pacSel2.style.display = 'none';
       }
-      if (allowedForns && allowedForns.length === 1) {
-        var fornSel = document.getElementById('forn');
-        fornSel.value = allowedForns[0];
-        fornSel.style.display = 'none';
-      }
+    }
+    if (cfg.fornFilt === false) {
+      var fornEl = document.getElementById('forn');
+      if (fornEl) fornEl.style.display = 'none';
     }
     var banner = document.createElement('div');
     banner.className = 'share-banner';
@@ -745,18 +740,6 @@ document.getElementById('btnShare').addEventListener('click', function() {
     lbl.appendChild(document.createTextNode(' ' + p));
     pacDiv.appendChild(lbl);
   });
-  var fornDiv = document.getElementById('shareFornList');
-  fornDiv.innerHTML = '';
-  var sforns = Array.from(new Set(RAW_DATA.map(function(r){ return r.fornecedor; }))).sort();
-  sforns.forEach(function(fn) {
-    var lbl = document.createElement('label');
-    lbl.className = 'chk-item';
-    var cb = document.createElement('input');
-    cb.type = 'checkbox'; cb.value = fn; cb.checked = false;
-    lbl.appendChild(cb);
-    lbl.appendChild(document.createTextNode(' ' + toTitleCase(fn)));
-    fornDiv.appendChild(lbl);
-  });
   document.getElementById('shareDrillChk').checked = true;
   document.getElementById('shareProvChk').checked = true;
   document.getElementById('shareVarChk').checked = true;
@@ -771,17 +754,17 @@ document.getElementById('shareBg').addEventListener('click', function(e){ if(e.t
 document.getElementById('shareGerar').addEventListener('click', function() {
   var emps = Array.from(document.querySelectorAll('#shareEmps input:checked')).map(function(i){ return i.value; });
   var pacs = Array.from(document.querySelectorAll('#sharePacList input:checked')).map(function(i){ return i.value; });
-  var forns = Array.from(document.querySelectorAll('#shareFornList input:checked')).map(function(i){ return i.value; });
-  var drill  = document.getElementById('shareDrillChk').checked;
-  var prov   = document.getElementById('shareProvChk').checked;
-  var varBtn = document.getElementById('shareVarChk').checked;
+  var drill    = document.getElementById('shareDrillChk').checked;
+  var prov     = document.getElementById('shareProvChk').checked;
+  var varBtn   = document.getElementById('shareVarChk').checked;
+  var fornFilt = document.getElementById('shareFornFiltChk').checked;
   var cfg = {};
   if (emps.length && emps.length < 4) cfg.emps = emps;
   if (pacs.length) cfg.pacs = pacs;
-  if (forns.length) cfg.forns = forns;
   if (!drill) cfg.drill = false;
   if (!prov) cfg.prov = false;
   if (!varBtn) cfg.varBtn = false;
+  if (!fornFilt) cfg.fornFilt = false;
   var token = btoa(encodeURIComponent(JSON.stringify(cfg)));
   var url = SHARE_BASE + '?share=' + token;
   document.getElementById('shareUrlText').textContent = url;
